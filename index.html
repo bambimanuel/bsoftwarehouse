@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="pt">
 <head>
-  <link rel="stylesheet" href="theme.css?v=7" />
+  <link rel="stylesheet" href="theme.css?v=9" />
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>B-SOFTWARE HOUSE | Desenvolvimento de Software, Sites e Apps em Angola</title>
@@ -40,6 +40,7 @@
       </a>
 
       <nav class="nav-links" id="nav-links" aria-label="Navegação principal">
+        <span class="nav-links-label">// menu</span>
         <a href="#servicos">Serviços</a>
         <a href="#processo">Processo</a>
         <a href="#precos">Preços</a>
@@ -48,7 +49,11 @@
       </nav>
 
       <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="nav-links" aria-label="Abrir menu">
-        <i class="ph ph-list" aria-hidden="true"></i>
+        <span class="burger" aria-hidden="true">
+          <span class="burger-line"></span>
+          <span class="burger-line"></span>
+          <span class="burger-line"></span>
+        </span>
       </button>
     </div>
   </header>
@@ -642,19 +647,42 @@
     /* ---------- Menu móvel ---------- */
     var nav = document.getElementById("nav");
     var navToggle = document.getElementById("nav-toggle");
-    var navIcon = navToggle.querySelector(".ph");
+    var navLinksPanel = document.getElementById("nav-links");
+    var mobileMQ = window.matchMedia("(max-width: 768px)");
+    /* Drawer fechado no móvel fica inert + aria-hidden (fora de tab e leitores de ecrã).
+       No desktop o painel é a navegação normal — nunca inert. */
+    function syncNavA11y() {
+      var hide = mobileMQ.matches && !nav.classList.contains("open");
+      navLinksPanel.setAttribute("aria-hidden", hide ? "true" : "false");
+      navLinksPanel.inert = hide;
+    }
+    function closeMenu(restoreFocus) {
+      nav.classList.remove("open");
+      navToggle.setAttribute("aria-expanded", "false");
+      navToggle.setAttribute("aria-label", "Abrir menu");
+      document.body.style.overflow = "";
+      syncNavA11y();
+      if (restoreFocus && navLinksPanel.contains(document.activeElement)) navToggle.focus();
+    }
     navToggle.addEventListener("click", function () {
       var open = nav.classList.toggle("open");
       navToggle.setAttribute("aria-expanded", String(open));
-      navIcon.className = open ? "ph ph-x" : "ph ph-list";
+      navToggle.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu");
+      document.body.style.overflow = open ? "hidden" : "";
+      syncNavA11y();
+      if (open) {
+        var firstLink = navLinksPanel.querySelector("a");
+        if (firstLink) firstLink.focus();
+      }
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && nav.classList.contains("open")) closeMenu(true);
     });
     document.querySelectorAll("#nav-links a").forEach(function (link) {
-      link.addEventListener("click", function () {
-        nav.classList.remove("open");
-        navToggle.setAttribute("aria-expanded", "false");
-        navIcon.className = "ph ph-list";
-      });
+      link.addEventListener("click", function () { closeMenu(false); });
     });
+    mobileMQ.addEventListener("change", syncNavA11y);
+    syncNavA11y();
 
     /* ---------- Revelar secções ao entrar no ecrã ---------- */
     var revealObserver = new IntersectionObserver(function (entries) {
